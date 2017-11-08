@@ -129,7 +129,7 @@ while wait_for_serial:
 # pitch=0
 # yaw=0
 # seq=0
-# accel_factor = 9.806 / 256.0    # sensor reports accel as 256.0 = 1G (9.8m/s^2). Convert to m/s^2.
+accel_factor = 9.806 / 2.0    # sensor reports accel as 256.0 = 1G (9.8m/s^2). Convert to m/s^2.
 # rospy.loginfo("Giving the razor IMU board 5 seconds to boot...")
 # rospy.sleep(5) # Sleep for 5 seconds to wait for the board to boot
 
@@ -154,22 +154,27 @@ while not rospy.is_shutdown():
     if len(words) == 11:
 
         # Publish message
-        # AHRS firmware accelerations are negated
-        # This means y and z are correct for ROS, but x needs reversing
-        imuMsg.linear_acceleration.x = float(words[1]) #* accel_factor
-        imuMsg.linear_acceleration.y = float(words[2]) #* accel_factor
-        imuMsg.linear_acceleration.z = float(words[3]) #* accel_factor
+        #REP 103
+        #angular
+        # roll rotation about X
+        # pitch rotation about Y
+        # yaw rotation about Z
+        #body
+        # X forward
+        # Y left
+        # Z up
+        imuMsg.linear_acceleration.x = float(words[1]) * accel_factor
+        imuMsg.linear_acceleration.y = float(words[2]) * accel_factor
+        imuMsg.linear_acceleration.z = float(words[3]) * accel_factor
 
         imuMsg.angular_velocity.x = float(words[4])
-        #in AHRS firmware y axis points right, in ROS y axis points left (see REP 103)
-        imuMsg.angular_velocity.y = -float(words[5])
-        #in AHRS firmware z axis points down, in ROS z axis points up (see REP 103)
-        imuMsg.angular_velocity.z = -float(words[6])
+        imuMsg.angular_velocity.y = float(words[5])
+        imuMsg.angular_velocity.z = float(words[6])
 
-        imuMsg.orientation.x = float(words[7])
-        imuMsg.orientation.y = float(words[8])
-        imuMsg.orientation.z = float(words[9])
-        imuMsg.orientation.w = float(words[10])
+        imuMsg.orientation.w = float(words[7])
+        imuMsg.orientation.x = float(words[8])
+        imuMsg.orientation.y = float(words[9])
+        imuMsg.orientation.z = float(words[10])
         imuMsg.header.stamp= rospy.Time.now()
         imuMsg.header.frame_id = 'base_imu_link'
         imuMsg.header.seq = seq
